@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback } from "react";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,40 +12,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-const NEIGHBORHOODS = [
-  "Agdal",
-  "Hay Ryad",
-  "CYM",
-  "Souissi",
-  "Yacoub El Mansour",
-  "Hassan",
-  "Océan",
-  "Aviation",
-  "Diour Jamaa",
-  "Centre-Ville",
-];
-
-const SPECIALTIES = [
-  "Implants",
-  "Orthodontie",
-  "Pédiatrie",
-  "Esthétique",
-  "Chirurgie",
-  "Parodontologie",
-  "Endodontie",
-  "Prothèse",
-  "Blanchiment",
-];
+import { CITIES, NEIGHBORHOODS_BY_CITY, SPECIALTIES } from "@/lib/constants";
 
 export function SearchFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const q = searchParams.get("q") ?? "";
+  const city = searchParams.get("city") ?? "";
   const neighborhood = searchParams.get("neighborhood") ?? "";
   const specialty = searchParams.get("specialty") ?? "";
   const verified = searchParams.get("verified") === "true";
+
+  const neighborhoods = city
+    ? (NEIGHBORHOODS_BY_CITY[city] ?? [])
+    : Object.values(NEIGHBORHOODS_BY_CITY).flat();
 
   const update = useCallback(
     (key: string, value: string | null) => {
@@ -55,11 +36,26 @@ export function SearchFilters() {
       } else {
         params.delete(key);
       }
-      params.delete("offset"); // reset pagination on filter change
+      params.delete("offset");
       router.push(`/search?${params.toString()}`);
     },
     [router, searchParams]
   );
+
+  function handleCityChange(val: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (val && val !== "all") {
+      params.set("city", val);
+    } else {
+      params.delete("city");
+    }
+    // reset neighborhood when city changes
+    params.delete("neighborhood");
+    params.delete("offset");
+    router.push(`/search?${params.toString()}`);
+  }
+
+  const hasFilters = !!(q || city || neighborhood || specialty || verified);
 
   return (
     <div className="flex flex-col gap-3">
@@ -71,13 +67,25 @@ export function SearchFilters() {
           placeholder="Nom, quartier…"
           className="pl-9"
           onKeyDown={(e) => {
-            if (e.key === "Enter") {
+            if (e.key === "Enter")
               update("q", (e.target as HTMLInputElement).value || null);
-            }
           }}
           onBlur={(e) => update("q", e.target.value || null)}
         />
       </div>
+
+      {/* City */}
+      <Select value={city || "all"} onValueChange={handleCityChange}>
+        <SelectTrigger>
+          <SelectValue placeholder="Toutes les villes" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Toutes les villes</SelectItem>
+          {CITIES.map((c) => (
+            <SelectItem key={c} value={c}>{c}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
       {/* Neighborhood */}
       <Select
@@ -89,10 +97,8 @@ export function SearchFilters() {
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Tous les quartiers</SelectItem>
-          {NEIGHBORHOODS.map((n) => (
-            <SelectItem key={n} value={n}>
-              {n}
-            </SelectItem>
+          {neighborhoods.map((n) => (
+            <SelectItem key={n} value={n}>{n}</SelectItem>
           ))}
         </SelectContent>
       </Select>
@@ -108,9 +114,7 @@ export function SearchFilters() {
         <SelectContent>
           <SelectItem value="all">Toutes les spécialités</SelectItem>
           {SPECIALTIES.map((s) => (
-            <SelectItem key={s} value={s}>
-              {s}
-            </SelectItem>
+            <SelectItem key={s} value={s}>{s}</SelectItem>
           ))}
         </SelectContent>
       </Select>
@@ -120,16 +124,13 @@ export function SearchFilters() {
         <input
           type="checkbox"
           checked={verified}
-          onChange={(e) =>
-            update("verified", e.target.checked ? "true" : null)
-          }
+          onChange={(e) => update("verified", e.target.checked ? "true" : null)}
           className="h-4 w-4 accent-emerald-600"
         />
         <span>Vérifiés seulement</span>
       </label>
 
-      {/* Reset */}
-      {(q || neighborhood || specialty || verified) && (
+      {hasFilters && (
         <Button
           variant="ghost"
           size="sm"

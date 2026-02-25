@@ -27,11 +27,11 @@ export async function generateMetadata({
   const dentist = await getDentistBySlug(slug);
   if (!dentist) return { title: "Dentiste introuvable" };
   return {
-    title: `${dentist.name} – Dentiste à Rabat | Dentistes Rabat`,
-    description: `Fiche complète de ${dentist.name}, dentiste${dentist.neighborhood ? ` à ${dentist.neighborhood}` : ""} à Rabat. Téléphone, adresse, spécialités.`,
+    title: `${dentist.name} – Dentiste${dentist.city ? ` à ${dentist.city}` : " au Maroc"}`,
+    description: `Fiche complète de ${dentist.name}, dentiste${dentist.neighborhood ? ` à ${dentist.neighborhood}` : ""}${dentist.city ? `, ${dentist.city}` : ""}. Téléphone, adresse, spécialités.`,
     openGraph: {
       title: dentist.name,
-      description: `Dentiste à Rabat${dentist.neighborhood ? ` – ${dentist.neighborhood}` : ""}`,
+      description: `Dentiste${dentist.city ? ` à ${dentist.city}` : " au Maroc"}${dentist.neighborhood ? ` – ${dentist.neighborhood}` : ""}`,
       images: dentist.photo_url ? [dentist.photo_url] : [],
     },
   };
@@ -120,10 +120,10 @@ export default async function DentistePage({
                     </div>
                   )}
 
-                  {dentist.neighborhood && (
+                  {(dentist.neighborhood || dentist.city) && (
                     <p className="mt-2 flex items-center gap-1.5 text-sm text-zinc-500">
                       <MapPin className="h-4 w-4 shrink-0" />
-                      {dentist.neighborhood}, Rabat
+                      {[dentist.neighborhood, dentist.city].filter(Boolean).join(", ")}
                     </p>
                   )}
                 </div>

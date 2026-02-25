@@ -42,10 +42,10 @@ export function DentistCard({ dentist }: { dentist: Dentist }) {
           {dentist.rating && <StarRating rating={dentist.rating} />}
         </CardHeader>
         <CardContent className="flex flex-col gap-2 pb-4">
-          {dentist.neighborhood && (
+          {(dentist.neighborhood || dentist.city) && (
             <p className="flex items-center gap-1.5 text-sm text-zinc-500">
               <MapPin className="h-3.5 w-3.5 shrink-0" />
-              {dentist.neighborhood}
+              {[dentist.neighborhood, dentist.city].filter(Boolean).join(" · ")}
             </p>
           )}
           {dentist.phone && (

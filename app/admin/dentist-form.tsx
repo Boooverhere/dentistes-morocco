@@ -1,9 +1,8 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -12,12 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CITIES, NEIGHBORHOODS_BY_CITY, SPECIALTIES } from "@/lib/constants";
 import type { Dentist } from "@/lib/types";
-
-const NEIGHBORHOODS = [
-  "Agdal", "Hay Ryad", "CYM", "Souissi", "Yacoub El Mansour",
-  "Hassan", "Océan", "Aviation", "Diour Jamaa", "Centre-Ville",
-];
 
 type ActionFn = (
   prev: unknown,
@@ -32,6 +27,11 @@ interface DentistFormProps {
 
 export function DentistForm({ action, dentist, onSuccess }: DentistFormProps) {
   const [state, formAction, pending] = useActionState(action, null);
+  const [selectedCity, setSelectedCity] = useState(dentist?.city ?? "");
+
+  const neighborhoods = selectedCity
+    ? (NEIGHBORHOODS_BY_CITY[selectedCity] ?? [])
+    : Object.values(NEIGHBORHOODS_BY_CITY).flat();
 
   useEffect(() => {
     if (state && "success" in state && state.success) onSuccess();
@@ -39,7 +39,6 @@ export function DentistForm({ action, dentist, onSuccess }: DentistFormProps) {
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
-      {/* Hidden fields for edit */}
       {dentist && (
         <>
           <input type="hidden" name="id" value={dentist.id} />
@@ -53,11 +52,31 @@ export function DentistForm({ action, dentist, onSuccess }: DentistFormProps) {
         </p>
       )}
 
-      {/* Row 1 */}
+      {/* Row 1 – name */}
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="name">Nom *</Label>
+        <Input id="name" name="name" required defaultValue={dentist?.name} placeholder="Dr. Mohammed Alami" />
+      </div>
+
+      {/* Row 2 – city + neighborhood */}
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="name">Nom *</Label>
-          <Input id="name" name="name" required defaultValue={dentist?.name} placeholder="Dr. Mohammed Alami" />
+          <Label htmlFor="city">Ville</Label>
+          <Select
+            name="city"
+            defaultValue={dentist?.city ?? ""}
+            onValueChange={(v) => setSelectedCity(v === "none" ? "" : v)}
+          >
+            <SelectTrigger id="city">
+              <SelectValue placeholder="Choisir…" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">—</SelectItem>
+              {CITIES.map((c) => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="neighborhood">Quartier</Label>
@@ -66,7 +85,8 @@ export function DentistForm({ action, dentist, onSuccess }: DentistFormProps) {
               <SelectValue placeholder="Choisir…" />
             </SelectTrigger>
             <SelectContent>
-              {NEIGHBORHOODS.map((n) => (
+              <SelectItem value="none">—</SelectItem>
+              {neighborhoods.map((n) => (
                 <SelectItem key={n} value={n}>{n}</SelectItem>
               ))}
             </SelectContent>
@@ -74,13 +94,13 @@ export function DentistForm({ action, dentist, onSuccess }: DentistFormProps) {
         </div>
       </div>
 
-      {/* Row 2 */}
+      {/* Row 3 – address */}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="address">Adresse</Label>
         <Input id="address" name="address" defaultValue={dentist?.address ?? ""} placeholder="12 Rue Ibn Sina, Agdal" />
       </div>
 
-      {/* Row 3 */}
+      {/* Row 4 – phone + email */}
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="phone">Téléphone</Label>
@@ -92,15 +112,17 @@ export function DentistForm({ action, dentist, onSuccess }: DentistFormProps) {
         </div>
       </div>
 
-      {/* Row 4 */}
+      {/* Row 5 – website */}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="website">Site web</Label>
         <Input id="website" name="website" defaultValue={dentist?.website ?? ""} placeholder="https://cabinet-dentaire.ma" />
       </div>
 
-      {/* Row 5 */}
+      {/* Row 6 – specialties */}
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="specialties">Spécialités <span className="text-xs text-zinc-400">(séparées par virgule)</span></Label>
+        <Label htmlFor="specialties">
+          Spécialités <span className="text-xs text-zinc-400">(séparées par virgule)</span>
+        </Label>
         <Input
           id="specialties"
           name="specialties"
@@ -109,7 +131,7 @@ export function DentistForm({ action, dentist, onSuccess }: DentistFormProps) {
         />
       </div>
 
-      {/* Row 6 */}
+      {/* Row 7 – rating + reviews */}
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="rating">Note (0–5)</Label>
@@ -121,7 +143,7 @@ export function DentistForm({ action, dentist, onSuccess }: DentistFormProps) {
         </div>
       </div>
 
-      {/* Row 7 – coords */}
+      {/* Row 8 – coords */}
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="latitude">Latitude</Label>
@@ -133,13 +155,13 @@ export function DentistForm({ action, dentist, onSuccess }: DentistFormProps) {
         </div>
       </div>
 
-      {/* Row 8 */}
+      {/* Row 9 – photo */}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="photo_url">URL photo</Label>
         <Input id="photo_url" name="photo_url" defaultValue={dentist?.photo_url ?? ""} placeholder="https://..." />
       </div>
 
-      {/* Row 9 – verified */}
+      {/* Row 10 – verified */}
       <div className="flex items-center gap-3 rounded-lg border border-border px-3 py-2.5">
         <input
           type="checkbox"

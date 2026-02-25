@@ -9,9 +9,9 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Rechercher un dentiste à Rabat | Dentistes Rabat",
+  title: "Rechercher un dentiste au Maroc",
   description:
-    "Trouvez un dentiste à Rabat par quartier, spécialité ou nom. Résultats filtrables et mis à jour régulièrement.",
+    "Trouvez un dentiste au Maroc par ville, quartier, spécialité ou nom. Résultats filtrables et mis à jour régulièrement.",
 };
 
 const PAGE_SIZE = 20;
@@ -35,6 +35,7 @@ export default async function SearchPage({
 }: {
   searchParams: Promise<{
     q?: string;
+    city?: string;
     neighborhood?: string;
     specialty?: string;
     verified?: string;
@@ -46,6 +47,7 @@ export default async function SearchPage({
 
   const { dentists, total } = await searchDentists({
     q: params.q,
+    city: params.city,
     neighborhood: params.neighborhood,
     specialty: params.specialty,
     verified: params.verified === "true",
@@ -53,13 +55,14 @@ export default async function SearchPage({
     offset,
   });
 
-  const hasFilters = !!(params.q || params.neighborhood || params.specialty || params.verified);
+  const hasFilters = !!(params.q || params.city || params.neighborhood || params.specialty || params.verified);
   const totalPages = Math.ceil(total / PAGE_SIZE);
   const currentPage = Math.floor(offset / PAGE_SIZE) + 1;
 
   function buildPageUrl(newOffset: number) {
     const p = new URLSearchParams();
     if (params.q) p.set("q", params.q);
+    if (params.city) p.set("city", params.city);
     if (params.neighborhood) p.set("neighborhood", params.neighborhood);
     if (params.specialty) p.set("specialty", params.specialty);
     if (params.verified) p.set("verified", params.verified);
@@ -72,11 +75,8 @@ export default async function SearchPage({
       {/* Header */}
       <div className="border-b border-border bg-white dark:bg-zinc-900">
         <div className="mx-auto max-w-6xl px-4 py-4">
-          <Link
-            href="/"
-            className="text-lg font-bold text-emerald-700 dark:text-emerald-400"
-          >
-            Dentistes Rabat
+          <Link href="/" className="text-lg font-bold text-emerald-700 dark:text-emerald-400">
+            DentistesMaroc.ma
           </Link>
         </div>
       </div>
@@ -109,10 +109,7 @@ export default async function SearchPage({
               {dentists.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-border bg-white py-16 text-center dark:bg-zinc-900">
                   <p className="text-zinc-500">Aucun dentiste trouvé.</p>
-                  <Link
-                    href="/search"
-                    className="mt-3 inline-block text-sm text-emerald-600 hover:underline"
-                  >
+                  <Link href="/search" className="mt-3 inline-block text-sm text-emerald-600 hover:underline">
                     Voir tous les dentistes
                   </Link>
                 </div>

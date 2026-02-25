@@ -14,11 +14,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Dentistes Rabat – Trouvez un dentiste à Rabat",
-    template: "%s | Dentistes Rabat",
+    default: "DentistesMaroc.ma – Trouvez un dentiste au Maroc",
+    template: "%s | DentistesMaroc.ma",
   },
   description:
-    "Annuaire des dentistes à Rabat : fiches vérifiées, coordonnées, spécialités et avis.",
+    "Annuaire des dentistes au Maroc : fiches vérifiées, coordonnées, spécialités et avis.",
 };
 
 export default function RootLayout({

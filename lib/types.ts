@@ -3,6 +3,7 @@ export interface Dentist {
   name: string;
   slug: string;
   address: string | null;
+  city: string | null;
   neighborhood: string | null;
   phone: string | null;
   email: string | null;
@@ -20,6 +21,7 @@ export interface Dentist {
 
 export interface DentistFilters {
   q?: string;
+  city?: string;
   neighborhood?: string;
   specialty?: string;
   verified?: boolean;

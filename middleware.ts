@@ -33,7 +33,8 @@ export async function middleware(request: NextRequest) {
     pathname === "/" ||
     pathname.startsWith("/search") ||
     pathname.startsWith("/dentiste") ||
-    pathname.startsWith("/auth")
+    pathname.startsWith("/auth") ||
+    pathname.startsWith("/contact")
 
   // Redirect unauthenticated users trying to access protected routes
   if (!user && !isAuthPage && !isPublicPage) {

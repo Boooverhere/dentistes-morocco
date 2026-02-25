@@ -60,6 +60,7 @@ export async function getDentistBySlug(slug: string): Promise<Dentist | null> {
 
 export async function searchDentists({
   q,
+  city,
   neighborhood,
   specialty,
   verified,
@@ -77,9 +78,10 @@ export async function searchDentists({
 
   if (q) {
     query = query.or(
-      `name.ilike.%${q}%,address.ilike.%${q}%,neighborhood.ilike.%${q}%`
+      `name.ilike.%${q}%,address.ilike.%${q}%,neighborhood.ilike.%${q}%,city.ilike.%${q}%`
     );
   }
+  if (city) query = query.ilike("city", city);
   if (neighborhood) query = query.ilike("neighborhood", neighborhood);
   if (specialty) query = query.contains("specialties", [specialty]);
   if (verified) query = query.eq("verified", true);

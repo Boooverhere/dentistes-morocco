@@ -8,12 +8,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Suspense } from "react";
 
 export const metadata: Metadata = {
-  title: "Dentistes Rabat – Trouvez le meilleur dentiste à Rabat",
+  title: "DentistesMaroc.ma – Trouvez le meilleur dentiste au Maroc",
   description:
-    "Annuaire des dentistes à Rabat : trouvez un dentiste vérifié près de chez vous par quartier ou spécialité. Agdal, Hay Ryad, Souissi, CYM et plus.",
+    "Annuaire des dentistes au Maroc : fiches vérifiées par ville et spécialité. Casablanca, Rabat, Marrakech, Tanger et plus.",
   openGraph: {
-    title: "Dentistes Rabat",
-    description: "Trouvez le meilleur dentiste à Rabat",
+    title: "DentistesMaroc.ma",
+    description: "Trouvez le meilleur dentiste au Maroc",
     type: "website",
   },
 };
@@ -90,7 +90,7 @@ export default function HomePage() {
       <header className="border-b border-border bg-white dark:bg-zinc-900">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <span className="text-lg font-bold text-emerald-700 dark:text-emerald-400">
-            Dentistes Rabat
+            DentistesMaroc.ma
           </span>
           <nav className="flex items-center gap-4">
             <Link
@@ -120,25 +120,33 @@ export default function HomePage() {
         <div className="relative mx-auto max-w-3xl text-center">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm">
             <MapPin className="h-3.5 w-3.5" />
-            Rabat, Maroc
+            Maroc
           </div>
           <h1 className="mb-4 text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">
             Trouvez le meilleur{" "}
-            <span className="text-emerald-300">dentiste à Rabat</span>
+            <span className="text-emerald-300">dentiste au Maroc</span>
           </h1>
           <p className="mb-8 text-lg text-emerald-100">
-            Annuaire complet et vérifié des dentistes de Rabat.
+            Annuaire complet et vérifié des dentistes dans toutes les villes du Maroc.
             <br className="hidden sm:block" />
-            Recherchez par quartier, spécialité ou nom.
+            Recherchez par ville, spécialité ou nom.
           </p>
           <SearchForm />
+
+          <Link
+            href="/contact"
+            className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+          >
+            + Ajouter votre cabinet
+          </Link>
 
           {/* Quick filters */}
           <div className="mt-6 flex flex-wrap justify-center gap-2">
             {[
-              { label: "Agdal", url: "/search?neighborhood=Agdal" },
-              { label: "Hay Ryad", url: "/search?neighborhood=Hay+Ryad" },
-              { label: "Souissi", url: "/search?neighborhood=Souissi" },
+              { label: "Casablanca", url: "/search?city=Casablanca" },
+              { label: "Rabat", url: "/search?city=Rabat" },
+              { label: "Marrakech", url: "/search?city=Marrakech" },
+              { label: "Tanger", url: "/search?city=Tanger" },
               { label: "Implants", url: "/search?specialty=Implants" },
               { label: "Orthodontie", url: "/search?specialty=Orthodontie" },
             ].map(({ label, url }) => (
@@ -199,10 +207,29 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* CTA banner */}
+      <section className="bg-emerald-700 px-4 py-14 text-white">
+        <div className="mx-auto max-w-3xl text-center">
+          <h2 className="text-2xl font-bold sm:text-3xl">
+            Vous êtes dentiste au Maroc ?
+          </h2>
+          <p className="mt-3 text-emerald-100">
+            Ajoutez votre cabinet gratuitement et soyez visible par des milliers
+            de patients dans tout le Maroc.
+          </p>
+          <Link
+            href="/contact"
+            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-emerald-700 shadow-sm transition-colors hover:bg-emerald-50"
+          >
+            + Ajouter votre cabinet
+          </Link>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="border-t border-border bg-white py-8 dark:bg-zinc-900">
         <div className="mx-auto max-w-6xl px-4 text-center text-sm text-zinc-400">
-          © {new Date().getFullYear()} Dentistes Rabat · dentistes-rabat.ma
+          © {new Date().getFullYear()} DentistesMaroc.ma
         </div>
       </footer>
     </div>

@@ -27,6 +27,7 @@ function formToDentist(formData: FormData, generateSlug = false) {
       slug: slugify(name) + "-" + Math.random().toString(36).slice(2, 7),
     }),
     address: (formData.get("address") as string) || null,
+    city: (formData.get("city") as string) || null,
     neighborhood: (formData.get("neighborhood") as string) || null,
     phone: (formData.get("phone") as string) || null,
     email: (formData.get("email") as string) || null,
