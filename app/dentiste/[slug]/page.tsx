@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
   MapPin,
@@ -17,13 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ClaimDialog } from "@/components/claim-dialog";
-
-const DentistMap = dynamic(() => import("@/components/map"), {
-  ssr: false,
-  loading: () => (
-    <div className="h-full w-full animate-pulse rounded-xl bg-zinc-100 dark:bg-zinc-800" />
-  ),
-});
+import { DentistMap } from "@/components/map-wrapper";
 
 export async function generateMetadata({
   params,
