@@ -33,7 +33,7 @@ async function SearchForm() {
           name="q"
           type="text"
           placeholder="Quartier, spécialité, nom…"
-          className="h-12 w-full rounded-xl border border-border bg-white pl-10 pr-4 text-sm shadow-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200 dark:bg-zinc-800 dark:focus:border-emerald-600 dark:focus:ring-emerald-900"
+          className="h-12 w-full rounded-xl border border-border bg-white pl-10 pr-4 text-sm text-zinc-900 placeholder-zinc-400 shadow-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200 dark:bg-zinc-800 dark:text-zinc-50 dark:placeholder-zinc-500 dark:focus:border-emerald-600 dark:focus:ring-emerald-900"
         />
       </div>
       <button
