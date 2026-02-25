@@ -98,6 +98,7 @@ export function DentistsTable({ dentists: initial }: { dentists: Dentist[] }) {
           <TableHeader>
             <TableRow className="bg-zinc-50 dark:bg-zinc-900">
               <TableHead className="w-[220px]">Nom</TableHead>
+              <TableHead>Ville</TableHead>
               <TableHead>Quartier</TableHead>
               <TableHead>Téléphone</TableHead>
               <TableHead>Spécialités</TableHead>
@@ -109,7 +110,7 @@ export function DentistsTable({ dentists: initial }: { dentists: Dentist[] }) {
           <TableBody>
             {filtered.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="py-10 text-center text-zinc-400">
+                <TableCell colSpan={8} className="py-10 text-center text-zinc-400">
                   Aucun résultat.
                 </TableCell>
               </TableRow>
@@ -117,6 +118,7 @@ export function DentistsTable({ dentists: initial }: { dentists: Dentist[] }) {
             {filtered.map((dentist) => (
               <TableRow key={dentist.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50">
                 <TableCell className="font-medium">{dentist.name}</TableCell>
+                <TableCell className="text-zinc-500">{dentist.city ?? "—"}</TableCell>
                 <TableCell className="text-zinc-500">{dentist.neighborhood ?? "—"}</TableCell>
                 <TableCell className="text-zinc-500">{dentist.phone ?? "—"}</TableCell>
                 <TableCell>
