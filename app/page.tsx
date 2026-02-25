@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Search, MapPin, ShieldCheck, Star } from "lucide-react";
+import { MapPin, ShieldCheck, Star } from "lucide-react";
 import type { Metadata } from "next";
 import { getFeaturedDentists, getStats, getTopCities } from "@/lib/supabase/queries";
 import { DentistCard } from "@/components/dentist-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Suspense } from "react";
+import { CITIES, SPECIALTIES } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "DentistesMaroc.ma – Trouvez le meilleur dentiste au Maroc",
@@ -21,24 +22,49 @@ export const metadata: Metadata = {
 async function SearchForm() {
   async function handleSearch(formData: FormData) {
     "use server";
-    const q = formData.get("q") as string;
-    redirect(`/search${q ? `?q=${encodeURIComponent(q)}` : ""}`);
+    const specialty = formData.get("specialty") as string;
+    const city = formData.get("city") as string;
+    const p = new URLSearchParams();
+    if (specialty) p.set("specialty", specialty);
+    if (city) p.set("city", city);
+    redirect(`/search?${p.toString()}`);
   }
 
   return (
-    <form action={handleSearch} className="flex w-full max-w-xl gap-2">
+    <form action={handleSearch} className="flex w-full max-w-2xl flex-col gap-3 sm:flex-row">
+      {/* Specialty select */}
       <div className="relative flex-1">
-        <Search className="absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400" />
-        <input
-          name="q"
-          type="text"
-          placeholder="Quartier, spécialité, nom…"
-          className="h-12 w-full rounded-xl border border-border bg-white pl-10 pr-4 text-sm text-zinc-900 placeholder-zinc-400 shadow-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200 dark:bg-zinc-800 dark:text-zinc-50 dark:placeholder-zinc-500 dark:focus:border-emerald-600 dark:focus:ring-emerald-900"
-        />
+        <select
+          name="specialty"
+          className="h-12 w-full appearance-none rounded-xl border border-white/30 bg-white/10 pl-4 pr-8 text-sm text-white backdrop-blur-sm outline-none focus:border-white/60 focus:ring-2 focus:ring-white/20"
+          defaultValue=""
+        >
+          <option value="" className="text-zinc-900">Toutes les spécialités</option>
+          {SPECIALTIES.map((s) => (
+            <option key={s} value={s} className="text-zinc-900">{s}</option>
+          ))}
+        </select>
+        <svg className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
       </div>
+
+      {/* City select */}
+      <div className="relative flex-1">
+        <select
+          name="city"
+          className="h-12 w-full appearance-none rounded-xl border border-white/30 bg-white/10 pl-4 pr-8 text-sm text-white backdrop-blur-sm outline-none focus:border-white/60 focus:ring-2 focus:ring-white/20"
+          defaultValue=""
+        >
+          <option value="" className="text-zinc-900">Toutes les villes</option>
+          {CITIES.map((c) => (
+            <option key={c} value={c} className="text-zinc-900">{c}</option>
+          ))}
+        </select>
+        <svg className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+      </div>
+
       <button
         type="submit"
-        className="h-12 rounded-xl bg-emerald-600 px-5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 active:bg-emerald-800"
+        className="h-12 rounded-xl bg-white px-6 text-sm font-semibold text-emerald-700 shadow-sm transition-colors hover:bg-emerald-50 active:bg-emerald-100"
       >
         Rechercher
       </button>

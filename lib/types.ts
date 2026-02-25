@@ -25,6 +25,7 @@ export interface DentistFilters {
   neighborhood?: string;
   specialty?: string;
   verified?: boolean;
+  minRating?: number;
   limit?: number;
   offset?: number;
 }

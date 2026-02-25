@@ -105,6 +105,7 @@ export async function searchDentists({
   neighborhood,
   specialty,
   verified,
+  minRating,
   limit = 20,
   offset = 0,
 }: DentistFilters): Promise<{ dentists: Dentist[]; total: number }> {
@@ -126,6 +127,7 @@ export async function searchDentists({
   if (neighborhood) query = query.ilike("neighborhood", neighborhood);
   if (specialty) query = query.contains("specialties", [specialty]);
   if (verified) query = query.eq("verified", true);
+  if (minRating) query = query.gte("rating", minRating);
 
   const { data, error, count } = await query;
 

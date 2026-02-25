@@ -39,11 +39,14 @@ export default async function SearchPage({
     neighborhood?: string;
     specialty?: string;
     verified?: string;
+    minRating?: string;
     offset?: string;
   }>;
 }) {
   const params = await searchParams;
   const offset = Number(params.offset ?? 0);
+
+  const minRating = params.minRating ? Number(params.minRating) : undefined;
 
   const { dentists, total } = await searchDentists({
     q: params.q,
@@ -51,11 +54,12 @@ export default async function SearchPage({
     neighborhood: params.neighborhood,
     specialty: params.specialty,
     verified: params.verified === "true",
+    minRating,
     limit: PAGE_SIZE,
     offset,
   });
 
-  const hasFilters = !!(params.q || params.city || params.neighborhood || params.specialty || params.verified);
+  const hasFilters = !!(params.q || params.city || params.neighborhood || params.specialty || params.verified || params.minRating);
   const totalPages = Math.ceil(total / PAGE_SIZE);
   const currentPage = Math.floor(offset / PAGE_SIZE) + 1;
 
@@ -66,6 +70,7 @@ export default async function SearchPage({
     if (params.neighborhood) p.set("neighborhood", params.neighborhood);
     if (params.specialty) p.set("specialty", params.specialty);
     if (params.verified) p.set("verified", params.verified);
+    if (params.minRating) p.set("minRating", params.minRating);
     if (newOffset > 0) p.set("offset", String(newOffset));
     return `/search?${p.toString()}`;
   }
