@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Search, MapPin, ShieldCheck, Star } from "lucide-react";
 import type { Metadata } from "next";
-import { getFeaturedDentists } from "@/lib/supabase/queries";
+import { getFeaturedDentists, getStats, getTopCities } from "@/lib/supabase/queries";
 import { DentistCard } from "@/components/dentist-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Suspense } from "react";
@@ -83,6 +83,61 @@ function FeaturedSkeleton() {
   );
 }
 
+async function DynamicCityPills() {
+  const [topCities, stats] = await Promise.all([getTopCities(4), getStats()]);
+  const specialties = ["Implants", "Orthodontie"];
+  const pills = [
+    ...topCities.map((city) => ({ label: city, url: `/search?city=${encodeURIComponent(city)}` })),
+    ...specialties.map((s) => ({ label: s, url: `/search?specialty=${encodeURIComponent(s)}` })),
+  ];
+  return (
+    <>
+      <div className="mt-6 flex flex-wrap justify-center gap-2">
+        {pills.map(({ label, url }) => (
+          <Link
+            key={label}
+            href={url}
+            className="rounded-full bg-white/10 px-3 py-1 text-sm text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+          >
+            {label}
+          </Link>
+        ))}
+      </div>
+      {/* Stats bar (rendered here to share the same fetch) */}
+      <div
+        id="stats-data"
+        data-total={stats.total}
+        data-verified={stats.verified}
+        data-cities={stats.cities}
+        className="hidden"
+      />
+    </>
+  );
+}
+
+async function StatsBar() {
+  const stats = await getStats();
+  return (
+    <div className="border-b border-border bg-white dark:bg-zinc-900">
+      <div className="mx-auto flex max-w-6xl divide-x divide-border">
+        {[
+          { icon: ShieldCheck, label: "Fiches vérifiées", value: stats.verified.toString() },
+          { icon: MapPin, label: "Villes couvertes", value: stats.cities.toString() },
+          { icon: Star, label: "Dentistes inscrits", value: stats.total.toString() },
+        ].map(({ icon: Icon, label, value }) => (
+          <div key={label} className="flex flex-1 items-center justify-center gap-3 px-4 py-4">
+            <Icon className="h-5 w-5 shrink-0 text-emerald-600" />
+            <div>
+              <p className="text-lg font-bold text-zinc-900 dark:text-zinc-50">{value}</p>
+              <p className="text-xs text-zinc-500">{label}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
@@ -134,57 +189,35 @@ export default function HomePage() {
           <SearchForm />
 
           <Link
-            href="/contact"
+            href="/ajouter-cabinet"
             className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/20"
           >
             + Ajouter votre cabinet
           </Link>
 
-          {/* Quick filters */}
-          <div className="mt-6 flex flex-wrap justify-center gap-2">
-            {[
-              { label: "Casablanca", url: "/search?city=Casablanca" },
-              { label: "Rabat", url: "/search?city=Rabat" },
-              { label: "Marrakech", url: "/search?city=Marrakech" },
-              { label: "Tanger", url: "/search?city=Tanger" },
-              { label: "Implants", url: "/search?specialty=Implants" },
-              { label: "Orthodontie", url: "/search?specialty=Orthodontie" },
-            ].map(({ label, url }) => (
-              <Link
-                key={label}
-                href={url}
-                className="rounded-full bg-white/10 px-3 py-1 text-sm text-white backdrop-blur-sm transition-colors hover:bg-white/20"
-              >
-                {label}
-              </Link>
-            ))}
-          </div>
+          {/* Dynamic city + specialty pills */}
+          <Suspense
+            fallback={
+              <div className="mt-6 flex flex-wrap justify-center gap-2">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <span key={i} className="h-7 w-20 animate-pulse rounded-full bg-white/10" />
+                ))}
+              </div>
+            }
+          >
+            <DynamicCityPills />
+          </Suspense>
         </div>
       </section>
 
-      {/* Stats bar */}
-      <div className="border-b border-border bg-white dark:bg-zinc-900">
-        <div className="mx-auto flex max-w-6xl divide-x divide-border">
-          {[
-            { icon: ShieldCheck, label: "Fiches vérifiées", value: "100+" },
-            { icon: MapPin, label: "Quartiers couverts", value: "10+" },
-            { icon: Star, label: "Spécialités", value: "9" },
-          ].map(({ icon: Icon, label, value }) => (
-            <div
-              key={label}
-              className="flex flex-1 items-center justify-center gap-3 px-4 py-4"
-            >
-              <Icon className="h-5 w-5 shrink-0 text-emerald-600" />
-              <div>
-                <p className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
-                  {value}
-                </p>
-                <p className="text-xs text-zinc-500">{label}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* Dynamic stats bar */}
+      <Suspense
+        fallback={
+          <div className="border-b border-border bg-white dark:bg-zinc-900 py-4" />
+        }
+      >
+        <StatsBar />
+      </Suspense>
 
       {/* Featured dentists */}
       <section className="mx-auto max-w-6xl px-4 py-12">
@@ -218,7 +251,7 @@ export default function HomePage() {
             de patients dans tout le Maroc.
           </p>
           <Link
-            href="/contact"
+            href="/ajouter-cabinet"
             className="mt-6 inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-emerald-700 shadow-sm transition-colors hover:bg-emerald-50"
           >
             + Ajouter votre cabinet

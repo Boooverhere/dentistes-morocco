@@ -58,6 +58,47 @@ export async function getDentistBySlug(slug: string): Promise<Dentist | null> {
   return data as Dentist;
 }
 
+export async function getStats(): Promise<{
+  total: number;
+  verified: number;
+  cities: number;
+}> {
+  const supabase = await createClient();
+
+  const [{ count: total }, { count: verified }, { data: cityRows }] =
+    await Promise.all([
+      supabase.from("dentists").select("*", { count: "exact", head: true }),
+      supabase
+        .from("dentists")
+        .select("*", { count: "exact", head: true })
+        .eq("verified", true),
+      supabase.from("dentists").select("city").not("city", "is", null),
+    ]);
+
+  const cities = new Set(cityRows?.map((r) => r.city).filter(Boolean)).size;
+  return { total: total ?? 0, verified: verified ?? 0, cities };
+}
+
+export async function getTopCities(limit = 6): Promise<string[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("dentists")
+    .select("city")
+    .not("city", "is", null);
+
+  if (!data) return [];
+
+  const counts: Record<string, number> = {};
+  for (const row of data) {
+    if (row.city) counts[row.city] = (counts[row.city] ?? 0) + 1;
+  }
+
+  return Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([city]) => city);
+}
+
 export async function searchDentists({
   q,
   city,
