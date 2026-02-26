@@ -1,153 +1,142 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
-import type { Metadata } from "next";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Ajouter votre cabinet",
-  description:
-    "Ajoutez votre cabinet dentaire sur DentistesMaroc.ma et soyez visible par des milliers de patients dans tout le Maroc.",
-};
+import { useActionState } from "react";
+import { CheckCircle, Mail, MessageSquare } from "lucide-react";
+import { SiteLayout } from "@/components/site-layout";
+import { sendContact } from "./actions";
+import type { ContactState } from "./actions";
 
-async function handleSubmit(formData: FormData) {
-  "use server";
-  const payload = {
-    name: formData.get("name"),
-    cabinet: formData.get("cabinet"),
-    phone: formData.get("phone"),
-    email: formData.get("email"),
-    neighborhood: formData.get("neighborhood"),
-    message: formData.get("message"),
-    submittedAt: new Date().toISOString(),
-  };
-  console.log("[contact/ajouter-cabinet]", payload);
-  // TODO: save to Supabase "leads" table or send via Resend
+function FieldError({ msg }: { msg?: string }) {
+  if (!msg) return null;
+  return <p className="mt-1 text-xs text-red-500">{msg}</p>;
 }
 
-export default function ContactPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ sent?: string }>;
-}) {
-  return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-      {/* Header */}
-      <header className="border-b border-border bg-white dark:bg-zinc-900">
-        <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
-          <Link
-            href="/"
-            className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-50"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Retour
-          </Link>
-          <span className="text-zinc-300 dark:text-zinc-700">|</span>
-          <span className="text-lg font-bold text-emerald-700 dark:text-emerald-400">
-            DentistesMaroc.ma
-          </span>
-        </div>
-      </header>
+export default function ContactPage() {
+  const [state, formAction, pending] = useActionState<ContactState, FormData>(
+    sendContact,
+    null
+  );
 
-      <main className="mx-auto max-w-xl px-4 py-12">
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
-            Ajouter votre cabinet
+  if (state?.success) {
+    return (
+      <SiteLayout>
+        <div className="flex min-h-[60vh] items-center justify-center px-4 py-20">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-white p-10 text-center dark:bg-zinc-900">
+            <CheckCircle className="mx-auto mb-4 h-12 w-12 text-emerald-500" />
+            <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
+              Message envoyé !
+            </h2>
+            <p className="mt-2 text-zinc-500">
+              Merci de nous avoir contactés. Nous vous répondrons dans les meilleurs délais.
+            </p>
+          </div>
+        </div>
+      </SiteLayout>
+    );
+  }
+
+  return (
+    <SiteLayout>
+      {/* Hero */}
+      <section className="bg-gradient-to-br from-emerald-700 to-emerald-900 px-4 py-16 text-white">
+        <div className="mx-auto max-w-3xl text-center">
+          <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
+            Contactez-nous
           </h1>
-          <p className="mt-2 text-zinc-500">
-            Remplissez ce formulaire et nous créerons votre fiche sous 24h.
-            C&apos;est gratuit.
+          <p className="mt-4 text-lg text-emerald-100">
+            Une question, une suggestion ou une erreur à signaler ? Écrivez-nous.
           </p>
         </div>
+      </section>
 
-        <div className="rounded-2xl border border-border bg-white p-8 dark:bg-zinc-900">
-          <form action={handleSubmit} className="flex flex-col gap-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  Votre prénom & nom *
+      <section className="mx-auto max-w-2xl px-4 py-14">
+        <div className="grid gap-8 sm:grid-cols-[1fr,2fr]">
+          {/* Info column */}
+          <div className="flex flex-col gap-5 pt-1">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900">
+                <Mail className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">Réponse rapide</p>
+                <p className="text-sm text-zinc-500">Généralement sous 48h.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900">
+                <MessageSquare className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">Sujets traités</p>
+                <p className="text-sm text-zinc-500">
+                  Modification de fiche, signalement d&apos;erreur, question générale, partenariat.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Form */}
+          <div className="rounded-2xl border border-border bg-white p-6 dark:bg-zinc-900">
+            <form action={formAction} className="flex flex-col gap-4">
+              {state?.error && (
+                <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950 dark:text-red-400">
+                  {state.error}
+                </p>
+              )}
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  Nom *
                 </label>
                 <input
                   name="name"
+                  type="text"
                   required
-                  placeholder="Dr. Mohamed Alami"
-                  className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200"
+                  placeholder="Votre nom"
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-zinc-900 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200 dark:text-zinc-50"
                 />
+                <FieldError msg={state?.fieldErrors?.name} />
               </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  Nom du cabinet *
-                </label>
-                <input
-                  name="cabinet"
-                  required
-                  placeholder="Cabinet Dentaire Alami"
-                  className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200"
-                />
-              </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  Téléphone *
-                </label>
-                <input
-                  name="phone"
-                  type="tel"
-                  required
-                  placeholder="+212 6 00 00 00 00"
-                  className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200"
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
                   Email *
                 </label>
                 <input
                   name="email"
                   type="email"
                   required
-                  placeholder="contact@cabinet.ma"
-                  className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200"
+                  placeholder="votre@email.com"
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-zinc-900 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200 dark:text-zinc-50"
                 />
+                <FieldError msg={state?.fieldErrors?.email} />
               </div>
-            </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Quartier
-              </label>
-              <input
-                name="neighborhood"
-                placeholder="Agdal, Hay Ryad, Souissi…"
-                className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200"
-              />
-            </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  Message *
+                </label>
+                <textarea
+                  name="message"
+                  required
+                  rows={5}
+                  placeholder="Décrivez votre demande…"
+                  className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm text-zinc-900 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200 dark:text-zinc-50"
+                />
+                <FieldError msg={state?.fieldErrors?.message} />
+              </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Message (optionnel)
-              </label>
-              <textarea
-                name="message"
-                rows={3}
-                placeholder="Spécialités, horaires, informations complémentaires…"
-                className="resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200"
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="mt-2 rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
-            >
-              Envoyer la demande
-            </button>
-          </form>
+              <button
+                type="submit"
+                disabled={pending}
+                className="mt-1 rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-60"
+              >
+                {pending ? "Envoi en cours…" : "Envoyer le message"}
+              </button>
+            </form>
+          </div>
         </div>
-
-        <p className="mt-4 text-center text-xs text-zinc-400">
-          Nous vous contacterons sous 24h pour finaliser votre fiche.
-        </p>
-      </main>
-    </div>
+      </section>
+    </SiteLayout>
   );
 }

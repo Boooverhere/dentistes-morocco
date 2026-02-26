@@ -286,9 +286,42 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border bg-white py-8 dark:bg-zinc-900">
-        <div className="mx-auto max-w-6xl px-4 text-center text-sm text-zinc-400">
-          © {new Date().getFullYear()} DentistesMaroc.ma
+      <footer className="border-t border-border bg-white py-10 dark:bg-zinc-900">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="grid gap-8 sm:grid-cols-3">
+            <div>
+              <p className="mb-2 text-sm font-bold text-emerald-700 dark:text-emerald-400">
+                DentistesMaroc.ma
+              </p>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                Annuaire des dentistes au Maroc. Fiches vérifiées, gratuites pour les patients.
+              </p>
+            </div>
+            <div>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                Navigation
+              </p>
+              <ul className="flex flex-col gap-2 text-sm text-zinc-500">
+                <li><Link href="/search" className="hover:text-zinc-900 dark:hover:text-zinc-50">Annuaire</Link></li>
+                <li><Link href="/ajouter-cabinet" className="hover:text-zinc-900 dark:hover:text-zinc-50">Ajouter votre cabinet</Link></li>
+                <li><Link href="/a-propos" className="hover:text-zinc-900 dark:hover:text-zinc-50">À propos</Link></li>
+                <li><Link href="/faq" className="hover:text-zinc-900 dark:hover:text-zinc-50">FAQ</Link></li>
+                <li><Link href="/contact" className="hover:text-zinc-900 dark:hover:text-zinc-50">Contact</Link></li>
+              </ul>
+            </div>
+            <div>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                Légal
+              </p>
+              <ul className="flex flex-col gap-2 text-sm text-zinc-500">
+                <li><Link href="/mentions-legales" className="hover:text-zinc-900 dark:hover:text-zinc-50">Mentions légales</Link></li>
+                <li><Link href="/politique-confidentialite" className="hover:text-zinc-900 dark:hover:text-zinc-50">Politique de confidentialité</Link></li>
+              </ul>
+            </div>
+          </div>
+          <div className="mt-8 border-t border-border pt-6 text-center text-xs text-zinc-400">
+            © {new Date().getFullYear()} DentistesMaroc.ma — Tous droits réservés
+          </div>
         </div>
       </footer>
     </div>
