@@ -2,15 +2,6 @@
 
 import { createClient } from "@/lib/supabase/server";
 
-function slugify(name: string): string {
-  return name
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-}
-
 export async function submitCabinet(
   _: unknown,
   formData: FormData
@@ -24,9 +15,6 @@ export async function submitCabinet(
     return { error: "Nom, ville et téléphone sont obligatoires." };
   }
 
-  const slug =
-    slugify(name) + "-" + Math.random().toString(36).slice(2, 7);
-
   const specialtiesRaw = (formData.get("specialties") as string) ?? "";
   const specialties = specialtiesRaw
     .split(",")
@@ -35,9 +23,8 @@ export async function submitCabinet(
 
   const supabase = await createClient();
 
-  const { error } = await supabase.from("dentists").insert({
+  const { error } = await supabase.from("pending_dentists").insert({
     name,
-    slug,
     city,
     neighborhood: (formData.get("neighborhood") as string) || null,
     address: (formData.get("address") as string) || null,
@@ -45,7 +32,7 @@ export async function submitCabinet(
     email: email || null,
     website: (formData.get("website") as string) || null,
     specialties: specialties.length ? specialties : null,
-    verified: false,
+    status: "pending",
   });
 
   if (error) {

@@ -101,3 +101,69 @@ export async function toggleVerified(id: string, verified: boolean) {
   revalidatePath("/search");
   return { success: true };
 }
+
+export async function approvePending(id: string) {
+  const supabase = await requireAdmin();
+
+  const { data: sub, error: fetchError } = await supabase
+    .from("pending_dentists")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (fetchError || !sub) return { error: fetchError?.message ?? "Introuvable." };
+
+  const slug =
+    sub.name
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") +
+    "-" +
+    Math.random().toString(36).slice(2, 7);
+
+  const { error: insertError } = await supabase.from("dentists").insert({
+    name: sub.name,
+    slug,
+    city: sub.city,
+    neighborhood: sub.neighborhood,
+    address: sub.address,
+    phone: sub.phone,
+    email: sub.email,
+    website: sub.website,
+    specialties: sub.specialties,
+    latitude: sub.latitude,
+    longitude: sub.longitude,
+    photo_url: sub.photo_url,
+    verified: false,
+  });
+
+  if (insertError) return { error: insertError.message };
+
+  const { error: updateError } = await supabase
+    .from("pending_dentists")
+    .update({ status: "approved" })
+    .eq("id", id);
+
+  if (updateError) return { error: updateError.message };
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+  revalidatePath("/search");
+  return { success: true };
+}
+
+export async function rejectPending(id: string, reason: string) {
+  const supabase = await requireAdmin();
+
+  const { error } = await supabase
+    .from("pending_dentists")
+    .update({ status: "rejected", rejection_reason: reason || null })
+    .eq("id", id);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin");
+  return { success: true };
+}
