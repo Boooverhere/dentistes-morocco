@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { isAdmin } from '@/lib/is-admin'
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -48,7 +49,8 @@ export async function middleware(request: NextRequest) {
 
   // Redirect authenticated users away from auth pages
   if (user && isAuthPage) {
-    return NextResponse.redirect(new URL("/dashboard", request.url))
+    const dest = isAdmin(user.email) ? "/admin" : "/dashboard"
+    return NextResponse.redirect(new URL(dest, request.url))
   }
 
   return supabaseResponse

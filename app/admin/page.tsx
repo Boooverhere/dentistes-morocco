@@ -4,6 +4,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/app/auth/actions";
 import { AdminTabs } from "./admin-tabs";
+import { isAdmin } from "@/lib/is-admin";
 import type { Dentist, PendingDentist } from "@/lib/types";
 
 export const metadata: Metadata = {
@@ -36,6 +37,7 @@ export default async function AdminPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+  if (!isAdmin(user.email)) redirect("/dashboard");
 
   const [dentists, pending] = await Promise.all([
     getAllDentists(),
