@@ -10,6 +10,13 @@ export async function login(formData: FormData) {
   const password = formData.get("password") as string;
 
   // Admin credentials check — bypasses Supabase auth
+  console.log("[login] admin check", {
+    emailMatch: email === process.env.ADMIN_EMAIL,
+    passwordMatch: password === process.env.ADMIN_PASSWORD,
+    envEmailSet: !!process.env.ADMIN_EMAIL,
+    envPasswordSet: !!process.env.ADMIN_PASSWORD,
+    envSecretSet: !!process.env.ADMIN_SECRET,
+  });
   if (
     email === process.env.ADMIN_EMAIL &&
     password === process.env.ADMIN_PASSWORD
