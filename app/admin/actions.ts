@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
+import { createAdminClient } from "@/lib/supabase/admin-client";
 
 function slugify(name: string): string {
   return name
@@ -43,10 +44,12 @@ function formToDentist(formData: FormData, generateSlug = false) {
 }
 
 async function requireAdmin() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-  return supabase;
+  const cookieStore = await cookies();
+  const adminAuth = cookieStore.get("admin_auth");
+  if (!adminAuth || adminAuth.value !== process.env.ADMIN_SECRET) {
+    redirect("/login");
+  }
+  return createAdminClient();
 }
 
 export async function createDentist(_: unknown, formData: FormData) {
@@ -114,14 +117,7 @@ export async function approvePending(id: string) {
   if (fetchError || !sub) return { error: fetchError?.message ?? "Introuvable." };
 
   const slug =
-    sub.name
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "") +
-    "-" +
-    Math.random().toString(36).slice(2, 7);
+    slugify(sub.name) + "-" + Math.random().toString(36).slice(2, 7);
 
   const { error: insertError } = await supabase.from("dentists").insert({
     name: sub.name,

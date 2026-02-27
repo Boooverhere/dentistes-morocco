@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/app/auth/actions";
 import { AdminTabs } from "./admin-tabs";
-import { isAdmin } from "@/lib/is-admin";
+import { createAdminClient } from "@/lib/supabase/admin-client";
 import type { Dentist, PendingDentist } from "@/lib/types";
 
 export const metadata: Metadata = {
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 };
 
 async function getAllDentists(): Promise<Dentist[]> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("dentists")
     .select("*")
@@ -23,7 +23,7 @@ async function getAllDentists(): Promise<Dentist[]> {
 }
 
 async function getPendingDentists(): Promise<PendingDentist[]> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("pending_dentists")
     .select("*")
@@ -34,10 +34,11 @@ async function getPendingDentists(): Promise<PendingDentist[]> {
 }
 
 export default async function AdminPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-  if (!isAdmin(user.email)) redirect("/dashboard");
+  const cookieStore = await cookies();
+  const adminAuth = cookieStore.get("admin_auth");
+  if (!adminAuth || adminAuth.value !== process.env.ADMIN_SECRET) {
+    redirect("/login");
+  }
 
   const [dentists, pending] = await Promise.all([
     getAllDentists(),
@@ -57,7 +58,7 @@ export default async function AdminPage() {
             </span>
           </div>
           <div className="flex items-center gap-4">
-            <span className="hidden text-sm text-zinc-500 sm:block">{user.email}</span>
+            <span className="hidden text-sm text-zinc-500 sm:block">Administrateur</span>
             <form action={logout}>
               <button
                 type="submit"

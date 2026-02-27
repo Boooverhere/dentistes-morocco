@@ -1,6 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { isAdmin } from '@/lib/is-admin'
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -26,9 +25,19 @@ export async function middleware(request: NextRequest) {
     }
   )
 
+  const { pathname } = request.nextUrl
+
+  // Admin routes: protected by cookie only (no Supabase auth needed)
+  if (pathname.startsWith("/admin")) {
+    const adminAuth = request.cookies.get("admin_auth")
+    if (!adminAuth || adminAuth.value !== process.env.ADMIN_SECRET) {
+      return NextResponse.redirect(new URL("/login", request.url))
+    }
+    return supabaseResponse
+  }
+
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { pathname } = request.nextUrl
   const isAuthPage = pathname.startsWith("/login") || pathname.startsWith("/signup")
   const isPublicPage =
     pathname === "/" ||
@@ -47,10 +56,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url))
   }
 
-  // Redirect authenticated users away from auth pages
+  // Redirect authenticated users away from auth pages to dashboard
   if (user && isAuthPage) {
-    const dest = isAdmin(user.email) ? "/admin" : "/dashboard"
-    return NextResponse.redirect(new URL(dest, request.url))
+    return NextResponse.redirect(new URL("/dashboard", request.url))
   }
 
   return supabaseResponse
