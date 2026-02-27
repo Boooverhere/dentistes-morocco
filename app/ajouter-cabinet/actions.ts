@@ -22,6 +22,9 @@ export async function submitCabinet(
     .filter(Boolean);
 
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const { error } = await supabase.from("pending_dentists").insert({
     name,
@@ -33,6 +36,7 @@ export async function submitCabinet(
     website: (formData.get("website") as string) || null,
     specialties: specialties.length ? specialties : null,
     status: "pending",
+    submitted_by: user?.id ?? null,
   });
 
   if (error) {
