@@ -150,6 +150,37 @@ export async function approvePending(id: string) {
   return { success: true };
 }
 
+export async function linkPendingToDentist(pendingId: string, dentistId: string) {
+  const supabase = await requireAdmin();
+
+  const { data: sub, error: fetchError } = await supabase
+    .from("pending_dentists")
+    .select("email, name")
+    .eq("id", pendingId)
+    .single();
+
+  if (fetchError || !sub) return { error: fetchError?.message ?? "Soumission introuvable." };
+  if (!sub.email) return { error: "La soumission n'a pas d'email. Impossible de lier." };
+
+  const { error: dentistError } = await supabase
+    .from("dentists")
+    .update({ email: sub.email })
+    .eq("id", dentistId);
+
+  if (dentistError) return { error: dentistError.message };
+
+  const { error: pendingError } = await supabase
+    .from("pending_dentists")
+    .update({ status: "approved" })
+    .eq("id", pendingId);
+
+  if (pendingError) return { error: pendingError.message };
+
+  revalidatePath("/admin");
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
 export async function rejectPending(id: string, reason: string) {
   const supabase = await requireAdmin();
 

@@ -50,7 +50,7 @@ export function AdminTabs({ dentists, pending }: Props) {
       {/* Tab content */}
       <div className="rounded-2xl border border-border bg-white p-6 dark:bg-zinc-900">
         {tab === "pending" ? (
-          <PendingTable submissions={pending} />
+          <PendingTable submissions={pending} dentists={dentists} />
         ) : (
           <DentistsTable dentists={dentists} />
         )}
