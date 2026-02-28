@@ -154,16 +154,18 @@ export async function approvePending(id: string) {
 
   // Send approval email (non-blocking)
   if (sub.email) {
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://dentistes-morocco.vercel.app");
+    const publicLink = `${siteUrl}/dentiste/${slug}`;
     try {
       await resend.emails.send({
         from: FROM,
         to: sub.email,
-        subject: "Votre fiche est publiée sur DentistesMaroc.ma",
+        subject: "Votre fiche est en ligne sur DentistesMaroc.ma !",
         html: `
           <p>Bonjour ${sub.name},</p>
           <p>Félicitations ! Votre fiche est maintenant publiée sur <strong>DentistesMaroc.ma</strong>.</p>
-          <p>Vous pouvez la consulter et la gérer depuis votre tableau de bord.</p>
-          <p><a href="https://dentistesmaroc.ma/dashboard">Accéder à mon tableau de bord</a></p>
+          <p><a href="${publicLink}" style="display:inline-block;background:#16a34a;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">Voir ma fiche en ligne</a></p>
+          <p>Gérez votre profil depuis votre <a href="${siteUrl}/dashboard">tableau de bord</a>.</p>
           <p>Cordialement,<br/>L'équipe DentistesMaroc.ma</p>
         `,
       });
@@ -228,17 +230,17 @@ export async function rejectPending(id: string, reason: string) {
 
   // Send rejection email (non-blocking)
   if (sub?.email) {
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://dentistes-morocco.vercel.app");
     try {
       await resend.emails.send({
         from: FROM,
         to: sub.email,
-        subject: "Mise à jour de votre demande – DentistesMaroc.ma",
+        subject: "Votre demande n'a pas été acceptée – DentistesMaroc.ma",
         html: `
           <p>Bonjour ${sub.name},</p>
-          <p>Nous avons examiné votre demande de publication sur <strong>DentistesMaroc.ma</strong>.</p>
-          ${reason ? `<p><strong>Motif :</strong> ${reason}</p>` : ""}
-          <p>Vous pouvez soumettre une nouvelle demande en corrigeant les informations.</p>
-          <p><a href="https://dentistesmaroc.ma/ajouter-cabinet">Soumettre à nouveau</a></p>
+          <p>Votre demande a été <strong>refusée</strong>${reason ? ` : ${reason}` : ""}.</p>
+          <p>Vous pouvez corriger les informations et soumettre à nouveau.</p>
+          <p><a href="${siteUrl}/ajouter-cabinet" style="display:inline-block;background:#18181b;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">Resoumettre ma fiche</a></p>
           <p>Cordialement,<br/>L'équipe DentistesMaroc.ma</p>
         `,
       });

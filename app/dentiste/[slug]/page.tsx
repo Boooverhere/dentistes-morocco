@@ -16,6 +16,7 @@ import { ClaimDialog } from "@/components/claim-dialog";
 import { DentistMap } from "@/components/map-wrapper";
 import { ViewTracker } from "./view-tracker";
 import { ContactButtons } from "./contact-buttons";
+import { ContactForm } from "./contact-form";
 
 export async function generateMetadata({
   params,
@@ -206,6 +207,9 @@ export default async function DentistePage({
                 )}
               </div>
             </div>
+
+            {/* Contact form */}
+            <ContactForm dentistId={dentist.id} />
 
             {/* Claim card */}
             {!dentist.verified && (

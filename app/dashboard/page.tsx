@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/app/auth/actions";
 import { DashboardTabs } from "./dashboard-tabs";
-import type { Dentist, PendingDentist } from "@/lib/types";
+import type { Dentist, Lead, PendingDentist } from "@/lib/types";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -13,11 +13,7 @@ export default async function DashboardPage() {
   if (!user) redirect("/login");
 
   const [{ data: dentist }, { data: pendingRows }] = await Promise.all([
-    supabase
-      .from("dentists")
-      .select("*")
-      .eq("email", user.email!)
-      .maybeSingle(),
+    supabase.from("dentists").select("*").eq("email", user.email!).maybeSingle(),
     supabase
       .from("pending_dentists")
       .select("*")
@@ -27,6 +23,18 @@ export default async function DashboardPage() {
   ]);
 
   const pending = (pendingRows as PendingDentist[] | null)?.[0] ?? null;
+
+  // Fetch leads for this dentist (only if they have a listing)
+  let leads: Lead[] = [];
+  if (dentist?.id) {
+    const { data } = await supabase
+      .from("leads")
+      .select("*")
+      .eq("dentist_id", dentist.id)
+      .order("created_at", { ascending: false })
+      .limit(100);
+    leads = (data as Lead[] | null) ?? [];
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-zinc-50 dark:bg-zinc-950">
@@ -42,9 +50,7 @@ export default async function DashboardPage() {
             </span>
           </div>
           <div className="flex items-center gap-4">
-            <span className="hidden text-sm text-zinc-500 sm:block">
-              {user.email}
-            </span>
+            <span className="hidden text-sm text-zinc-500 sm:block">{user.email}</span>
             <form action={logout}>
               <button
                 type="submit"
@@ -65,6 +71,7 @@ export default async function DashboardPage() {
         <DashboardTabs
           dentist={dentist as Dentist | null}
           pending={pending}
+          leads={leads}
         />
       </main>
     </div>

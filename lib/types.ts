@@ -14,11 +14,23 @@ export interface Dentist {
   latitude: number | null;
   longitude: number | null;
   photo_url: string | null;
+  photos: string[] | null;
   verified: boolean;
   premium_until: string | null;
   views_count: number;
   leads_count: number;
   created_at: string;
+}
+
+export interface Lead {
+  id: string;
+  dentist_id: string;
+  patient_name: string | null;
+  email: string | null;
+  phone: string | null;
+  message: string | null;
+  created_at: string;
+  status: string;
 }
 
 export interface PendingDentist {

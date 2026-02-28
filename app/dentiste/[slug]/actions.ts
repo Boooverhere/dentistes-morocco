@@ -12,6 +12,26 @@ export async function incrementLead(dentistId: string) {
   await supabase.rpc("increment_dentist_leads", { dentist_id: dentistId });
 }
 
+export async function submitLead(
+  _: unknown,
+  formData: FormData
+): Promise<{ error?: string; success?: boolean }> {
+  const supabase = await createClient();
+  const dentistId = formData.get("dentist_id") as string;
+  if (!dentistId) return { error: "Dentiste introuvable." };
+
+  const { error } = await supabase.from("leads").insert({
+    dentist_id: dentistId,
+    patient_name: (formData.get("patient_name") as string)?.trim() || null,
+    email: (formData.get("email") as string)?.trim() || null,
+    phone: (formData.get("phone") as string)?.trim() || null,
+    message: (formData.get("message") as string)?.trim() || null,
+  });
+
+  if (error) return { error: error.message };
+  return { success: true };
+}
+
 export async function claimListing(formData: FormData) {
   const payload = {
     dentistId: formData.get("dentistId"),

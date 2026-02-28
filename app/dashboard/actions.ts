@@ -3,6 +3,46 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
+export async function updatePhotos(
+  photos: string[]
+): Promise<{ error?: string; success?: boolean }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user?.email) return { error: "Non authentifié." };
+
+  const { error } = await supabase
+    .from("dentists")
+    .update({ photos, photo_url: photos[0] ?? null })
+    .eq("email", user.email);
+
+  if (error) return { error: error.message };
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
+export async function markLeadRead(
+  leadId: string
+): Promise<{ error?: string; success?: boolean }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user?.email) return { error: "Non authentifié." };
+
+  const { error } = await supabase
+    .from("leads")
+    .update({ status: "read" })
+    .eq("id", leadId);
+
+  if (error) return { error: error.message };
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
 export async function updatePhotoUrl(
   photoUrl: string
 ): Promise<{ error?: string; success?: boolean }> {

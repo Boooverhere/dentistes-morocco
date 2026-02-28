@@ -3,8 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useActionState } from "react";
 import Link from "next/link";
-import { CheckCircle, ExternalLink, Pencil, Shield, X } from "lucide-react";
-import { updateMyListing, updatePhotoUrl } from "./actions";
+import { CheckCircle, ExternalLink, Pencil, Plus, Shield, Trash2, X } from "lucide-react";
+import { toast } from "sonner";
+import { updateMyListing, updatePhotos } from "./actions";
 import type { Dentist } from "@/lib/types";
 import { CITIES, NEIGHBORHOODS_BY_CITY, SPECIALTIES } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/client";
@@ -13,54 +14,80 @@ export function ProfileCard({ dentist }: { dentist: Dentist }) {
   const [editing, setEditing] = useState(false);
   const [state, formAction, pending] = useActionState(updateMyListing, null);
   const [selectedCity, setSelectedCity] = useState(dentist.city ?? "");
-  const [photoPreview, setPhotoPreview] = useState(dentist.photo_url ?? "");
-  const [photoUploading, setPhotoUploading] = useState(false);
-  const [photoError, setPhotoError] = useState("");
+
+  // Photos state: seed from photos[] or fall back to photo_url
+  const initialPhotos = dentist.photos?.length
+    ? dentist.photos
+    : dentist.photo_url
+    ? [dentist.photo_url]
+    : [];
+  const [photos, setPhotos] = useState<string[]>(initialPhotos);
+  const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Close edit form after successful save
   useEffect(() => {
     if (state?.success) {
       setEditing(false);
+      toast.success("Fiche mise à jour.");
+    }
+    if (state?.error) {
+      toast.error(state.error);
     }
   }, [state]);
 
-  const neighborhoods = selectedCity
-    ? (NEIGHBORHOODS_BY_CITY[selectedCity] ?? [])
-    : [];
+  const neighborhoods = selectedCity ? (NEIGHBORHOODS_BY_CITY[selectedCity] ?? []) : [];
 
   function openEditForm() {
     setSelectedCity(dentist.city ?? "");
-    setPhotoPreview(dentist.photo_url ?? "");
     setEditing(true);
   }
 
-  async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setPhotoError("");
-    setPhotoUploading(true);
+  async function handleAddPhotos(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    setUploading(true);
     try {
       const supabase = createClient();
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Non authentifié.");
-      const path = `${user.id}/${Date.now()}-${file.name}`;
-      const { error: uploadError } = await supabase.storage
-        .from("dentist-photos")
-        .upload(path, file, { upsert: true });
-      if (uploadError) throw uploadError;
-      const { data } = supabase.storage
-        .from("dentist-photos")
-        .getPublicUrl(path);
-      const publicUrl = data.publicUrl;
-      setPhotoPreview(publicUrl);
-      await updatePhotoUrl(publicUrl);
+
+      const newUrls: string[] = [];
+      for (const file of files) {
+        const path = `${user.id}/${Date.now()}-${file.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from("dentist-photos")
+          .upload(path, file, { upsert: true });
+        if (uploadError) throw uploadError;
+        const { data } = supabase.storage.from("dentist-photos").getPublicUrl(path);
+        newUrls.push(data.publicUrl);
+      }
+
+      const next = [...photos, ...newUrls];
+      setPhotos(next);
+      const result = await updatePhotos(next);
+      if (result.error) throw new Error(result.error);
+      toast.success(
+        newUrls.length === 1 ? "Photo ajoutée." : `${newUrls.length} photos ajoutées.`
+      );
     } catch (err) {
-      setPhotoError(err instanceof Error ? err.message : "Erreur d'upload.");
+      toast.error(err instanceof Error ? err.message : "Erreur d'upload.");
     } finally {
-      setPhotoUploading(false);
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  async function handleRemovePhoto(url: string) {
+    const next = photos.filter((p) => p !== url);
+    setPhotos(next);
+    const result = await updatePhotos(next);
+    if (result.error) {
+      toast.error(result.error);
+      setPhotos(photos); // rollback
+    } else {
+      toast.success("Photo supprimée.");
     }
   }
 
@@ -91,9 +118,7 @@ export function ProfileCard({ dentist }: { dentist: Dentist }) {
 
       {/* Profile info */}
       <div className="space-y-2">
-        <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
-          {dentist.name}
-        </h2>
+        <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">{dentist.name}</h2>
         <p className="text-sm text-zinc-500">
           {[dentist.city, dentist.neighborhood].filter(Boolean).join(" · ")}
         </p>
@@ -110,9 +135,7 @@ export function ProfileCard({ dentist }: { dentist: Dentist }) {
           </div>
         )}
         {dentist.phone && (
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            {dentist.phone}
-          </p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">{dentist.phone}</p>
         )}
         {dentist.website && (
           <a
@@ -125,6 +148,64 @@ export function ProfileCard({ dentist }: { dentist: Dentist }) {
           </a>
         )}
       </div>
+
+      {/* Photo thumbnails (always visible) */}
+      {photos.length > 0 && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {photos.map((url) => (
+            <div key={url} className="group relative h-16 w-16">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={url}
+                alt=""
+                className="h-full w-full rounded-xl object-cover border border-zinc-200"
+              />
+              <button
+                type="button"
+                onClick={() => handleRemovePhoto(url)}
+                className="absolute -right-1.5 -top-1.5 hidden h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white shadow group-hover:flex"
+              >
+                <Trash2 className="h-3 w-3" />
+              </button>
+            </div>
+          ))}
+          {/* Add photo button */}
+          <button
+            type="button"
+            disabled={uploading}
+            onClick={() => fileInputRef.current?.click()}
+            className="flex h-16 w-16 items-center justify-center rounded-xl border-2 border-dashed border-zinc-300 text-zinc-400 hover:border-emerald-400 hover:text-emerald-600 disabled:opacity-50"
+          >
+            {uploading ? (
+              <span className="text-xs">…</span>
+            ) : (
+              <Plus className="h-5 w-5" />
+            )}
+          </button>
+        </div>
+      )}
+
+      {/* Add first photo when none exist */}
+      {photos.length === 0 && (
+        <button
+          type="button"
+          disabled={uploading}
+          onClick={() => fileInputRef.current?.click()}
+          className="mt-4 flex items-center gap-2 rounded-lg border border-dashed border-zinc-300 px-4 py-2.5 text-sm text-zinc-500 hover:border-emerald-400 hover:text-emerald-600 disabled:opacity-50"
+        >
+          <Plus className="h-4 w-4" />
+          {uploading ? "Téléchargement…" : "Ajouter une photo"}
+        </button>
+      )}
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={handleAddPhotos}
+      />
 
       {/* Edit toggle */}
       <div className="mt-6 border-t border-zinc-100 pt-4 dark:border-zinc-800">
@@ -255,9 +336,7 @@ export function ProfileCard({ dentist }: { dentist: Dentist }) {
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
                 Spécialités{" "}
-                <span className="font-normal text-zinc-400">
-                  (séparées par virgule)
-                </span>
+                <span className="font-normal text-zinc-400">(séparées par virgule)</span>
               </label>
               <input
                 name="specialties"
@@ -288,42 +367,6 @@ export function ProfileCard({ dentist }: { dentist: Dentist }) {
                     + {s}
                   </button>
                 ))}
-              </div>
-            </div>
-
-            {/* Photo upload */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                Photo
-              </label>
-              <div className="flex items-center gap-3">
-                {photoPreview && (
-                  <img
-                    src={photoPreview}
-                    alt="Aperçu"
-                    className="h-14 w-14 rounded-xl object-cover border border-zinc-200"
-                  />
-                )}
-                <div className="flex flex-col gap-1">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handlePhotoChange}
-                  />
-                  <button
-                    type="button"
-                    disabled={photoUploading}
-                    onClick={() => fileInputRef.current?.click()}
-                    className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                  >
-                    {photoUploading ? "Téléchargement…" : "Choisir une photo"}
-                  </button>
-                  {photoError && (
-                    <p className="text-xs text-red-600">{photoError}</p>
-                  )}
-                </div>
               </div>
             </div>
 
