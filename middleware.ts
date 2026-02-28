@@ -49,7 +49,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/a-propos") ||
     pathname.startsWith("/faq") ||
     pathname.startsWith("/mentions-legales") ||
-    pathname.startsWith("/politique-confidentialite")
+    pathname.startsWith("/politique-confidentialite") ||
+    pathname.startsWith("/premium")
 
   // Redirect unauthenticated users trying to access protected routes
   if (!user && !isAuthPage && !isPublicPage) {
