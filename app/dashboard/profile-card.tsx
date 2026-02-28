@@ -1,17 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useActionState } from "react";
 import Link from "next/link";
 import { CheckCircle, ExternalLink, Pencil, Shield, X } from "lucide-react";
-import { updateMyListing } from "./actions";
+import { updateMyListing, updatePhotoUrl } from "./actions";
 import type { Dentist } from "@/lib/types";
 import { CITIES, NEIGHBORHOODS_BY_CITY, SPECIALTIES } from "@/lib/constants";
+import { createClient } from "@/lib/supabase/client";
 
 export function ProfileCard({ dentist }: { dentist: Dentist }) {
   const [editing, setEditing] = useState(false);
   const [state, formAction, pending] = useActionState(updateMyListing, null);
   const [selectedCity, setSelectedCity] = useState(dentist.city ?? "");
+  const [photoPreview, setPhotoPreview] = useState(dentist.photo_url ?? "");
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoError, setPhotoError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Close edit form after successful save
   useEffect(() => {
@@ -25,9 +30,38 @@ export function ProfileCard({ dentist }: { dentist: Dentist }) {
     : [];
 
   function openEditForm() {
-    // Sync selectedCity to current dentist city when opening
     setSelectedCity(dentist.city ?? "");
+    setPhotoPreview(dentist.photo_url ?? "");
     setEditing(true);
+  }
+
+  async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoError("");
+    setPhotoUploading(true);
+    try {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Non authentifié.");
+      const path = `${user.id}/${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("dentist-photos")
+        .upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data } = supabase.storage
+        .from("dentist-photos")
+        .getPublicUrl(path);
+      const publicUrl = data.publicUrl;
+      setPhotoPreview(publicUrl);
+      await updatePhotoUrl(publicUrl);
+    } catch (err) {
+      setPhotoError(err instanceof Error ? err.message : "Erreur d'upload.");
+    } finally {
+      setPhotoUploading(false);
+    }
   }
 
   return (
@@ -257,17 +291,40 @@ export function ProfileCard({ dentist }: { dentist: Dentist }) {
               </div>
             </div>
 
-            {/* Photo URL */}
+            {/* Photo upload */}
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                URL de la photo
+                Photo
               </label>
-              <input
-                name="photo_url"
-                defaultValue={dentist.photo_url ?? ""}
-                placeholder="https://..."
-                className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200"
-              />
+              <div className="flex items-center gap-3">
+                {photoPreview && (
+                  <img
+                    src={photoPreview}
+                    alt="Aperçu"
+                    className="h-14 w-14 rounded-xl object-cover border border-zinc-200"
+                  />
+                )}
+                <div className="flex flex-col gap-1">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handlePhotoChange}
+                  />
+                  <button
+                    type="button"
+                    disabled={photoUploading}
+                    onClick={() => fileInputRef.current?.click()}
+                    className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  >
+                    {photoUploading ? "Téléchargement…" : "Choisir une photo"}
+                  </button>
+                  {photoError && (
+                    <p className="text-xs text-red-600">{photoError}</p>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="flex gap-3 pt-1">

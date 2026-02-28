@@ -4,6 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin-client";
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+const FROM = process.env.RESEND_FROM_EMAIL ?? "notifications@dentistesmaroc.ma";
 
 function slugify(name: string): string {
   return name
@@ -147,6 +151,27 @@ export async function approvePending(id: string) {
   revalidatePath("/admin");
   revalidatePath("/");
   revalidatePath("/search");
+
+  // Send approval email (non-blocking)
+  if (sub.email) {
+    try {
+      await resend.emails.send({
+        from: FROM,
+        to: sub.email,
+        subject: "Votre fiche est publiée sur DentistesMaroc.ma",
+        html: `
+          <p>Bonjour ${sub.name},</p>
+          <p>Félicitations ! Votre fiche est maintenant publiée sur <strong>DentistesMaroc.ma</strong>.</p>
+          <p>Vous pouvez la consulter et la gérer depuis votre tableau de bord.</p>
+          <p><a href="https://dentistesmaroc.ma/dashboard">Accéder à mon tableau de bord</a></p>
+          <p>Cordialement,<br/>L'équipe DentistesMaroc.ma</p>
+        `,
+      });
+    } catch {
+      // Non-blocking — do not fail the action if email fails
+    }
+  }
+
   return { success: true };
 }
 
@@ -184,6 +209,14 @@ export async function linkPendingToDentist(pendingId: string, dentistId: string)
 export async function rejectPending(id: string, reason: string) {
   const supabase = await requireAdmin();
 
+  const { data: sub, error: fetchError } = await supabase
+    .from("pending_dentists")
+    .select("email, name")
+    .eq("id", id)
+    .single();
+
+  if (fetchError) return { error: fetchError.message };
+
   const { error } = await supabase
     .from("pending_dentists")
     .update({ status: "rejected", rejection_reason: reason || null })
@@ -192,5 +225,27 @@ export async function rejectPending(id: string, reason: string) {
   if (error) return { error: error.message };
 
   revalidatePath("/admin");
+
+  // Send rejection email (non-blocking)
+  if (sub?.email) {
+    try {
+      await resend.emails.send({
+        from: FROM,
+        to: sub.email,
+        subject: "Mise à jour de votre demande – DentistesMaroc.ma",
+        html: `
+          <p>Bonjour ${sub.name},</p>
+          <p>Nous avons examiné votre demande de publication sur <strong>DentistesMaroc.ma</strong>.</p>
+          ${reason ? `<p><strong>Motif :</strong> ${reason}</p>` : ""}
+          <p>Vous pouvez soumettre une nouvelle demande en corrigeant les informations.</p>
+          <p><a href="https://dentistesmaroc.ma/ajouter-cabinet">Soumettre à nouveau</a></p>
+          <p>Cordialement,<br/>L'équipe DentistesMaroc.ma</p>
+        `,
+      });
+    } catch {
+      // Non-blocking — do not fail the action if email fails
+    }
+  }
+
   return { success: true };
 }

@@ -3,6 +3,46 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
+export async function updatePhotoUrl(
+  photoUrl: string
+): Promise<{ error?: string; success?: boolean }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user?.email) return { error: "Non authentifié." };
+
+  const { error } = await supabase
+    .from("dentists")
+    .update({ photo_url: photoUrl })
+    .eq("email", user.email);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
+export async function changePassword(
+  _: unknown,
+  formData: FormData
+): Promise<{ error?: string; success?: boolean }> {
+  const password = (formData.get("password") as string) ?? "";
+  const confirm = (formData.get("confirm") as string) ?? "";
+
+  if (password.length < 8)
+    return { error: "Le mot de passe doit contenir au moins 8 caractères." };
+  if (password !== confirm)
+    return { error: "Les mots de passe ne correspondent pas." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.updateUser({ password });
+
+  if (error) return { error: error.message };
+  return { success: true };
+}
+
 export async function updateMyListing(
   _: unknown,
   formData: FormData
@@ -30,7 +70,6 @@ export async function updateMyListing(
     phone: (formData.get("phone") as string)?.trim() || null,
     website: (formData.get("website") as string)?.trim() || null,
     specialties: specialties.length ? specialties : null,
-    photo_url: (formData.get("photo_url") as string)?.trim() || null,
   };
 
   const { data: updated, error } = await supabase

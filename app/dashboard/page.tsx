@@ -1,8 +1,7 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/app/auth/actions";
-import { ProfileCard } from "./profile-card";
+import { DashboardTabs } from "./dashboard-tabs";
 import type { Dentist, PendingDentist } from "@/lib/types";
 
 export default async function DashboardPage() {
@@ -63,106 +62,11 @@ export default async function DashboardPage() {
         <h1 className="mb-6 text-2xl font-bold text-zinc-900 dark:text-zinc-50">
           Mon tableau de bord
         </h1>
-
-        {dentist ? (
-          <ProfileCard dentist={dentist as Dentist} />
-        ) : pending ? (
-          <PendingCard pending={pending} />
-        ) : (
-          <EmptyState />
-        )}
+        <DashboardTabs
+          dentist={dentist as Dentist | null}
+          pending={pending}
+        />
       </main>
-
-      {/* Premium teaser */}
-      <div className="border-t border-amber-100 bg-amber-50 px-6 py-4 dark:border-amber-900/30 dark:bg-amber-950/20">
-        <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-amber-800 dark:text-amber-300">
-            <span className="font-semibold">Passez en Premium</span> —
-            Apparaissez en tête des résultats et gagnez plus de patients.
-          </p>
-          <Link
-            href="/contact"
-            className="shrink-0 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-600"
-          >
-            En savoir plus
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function PendingCard({ pending }: { pending: PendingDentist }) {
-  const submittedDate = new Date(pending.submitted_at).toLocaleDateString(
-    "fr-MA",
-    { day: "numeric", month: "long", year: "numeric" }
-  );
-  const isRejected = pending.status === "rejected";
-
-  return (
-    <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="mb-4 flex items-center gap-2">
-        {isRejected ? (
-          <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-700 dark:bg-red-950 dark:text-red-300">
-            Demande refusée
-          </span>
-        ) : (
-          <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-950 dark:text-amber-300">
-            En cours de vérification
-          </span>
-        )}
-      </div>
-
-      <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
-        {pending.name}
-      </h2>
-      <p className="mt-1 text-sm text-zinc-500">Soumis le {submittedDate}</p>
-
-      {isRejected && pending.rejection_reason && (
-        <div className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
-          <span className="font-medium">Motif : </span>
-          {pending.rejection_reason}
-        </div>
-      )}
-
-      {!isRejected && (
-        <p className="mt-3 text-sm text-zinc-500">
-          Notre équipe examine votre demande. Vous recevrez une notification
-          une fois votre fiche publiée.
-        </p>
-      )}
-
-      {isRejected && (
-        <Link
-          href="/ajouter-cabinet"
-          className="mt-5 inline-flex items-center rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
-        >
-          Soumettre à nouveau
-        </Link>
-      )}
-    </div>
-  );
-}
-
-function EmptyState() {
-  return (
-    <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-10 text-center dark:border-zinc-700 dark:bg-zinc-900">
-      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
-        <span className="text-2xl">🦷</span>
-      </div>
-      <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
-        Vous n&apos;avez pas encore de fiche
-      </h2>
-      <p className="mx-auto mt-2 max-w-sm text-sm text-zinc-500">
-        Créez votre profil sur DentistesMaroc.ma pour attirer de nouveaux
-        patients. C&apos;est gratuit.
-      </p>
-      <Link
-        href="/ajouter-cabinet"
-        className="mt-6 inline-flex items-center rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
-      >
-        Ajouter mon cabinet
-      </Link>
     </div>
   );
 }

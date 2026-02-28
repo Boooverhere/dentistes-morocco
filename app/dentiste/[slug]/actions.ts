@@ -1,5 +1,17 @@
 "use server";
 
+import { createClient } from "@/lib/supabase/server";
+
+export async function incrementView(dentistId: string) {
+  const supabase = await createClient();
+  await supabase.rpc("increment_dentist_views", { dentist_id: dentistId });
+}
+
+export async function incrementLead(dentistId: string) {
+  const supabase = await createClient();
+  await supabase.rpc("increment_dentist_leads", { dentist_id: dentistId });
+}
+
 export async function claimListing(formData: FormData) {
   const payload = {
     dentistId: formData.get("dentistId"),

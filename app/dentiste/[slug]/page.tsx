@@ -2,21 +2,20 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import {
   MapPin,
-  Phone,
   Mail,
   Globe,
   Star,
   ShieldCheck,
   ArrowLeft,
-  MessageCircle,
 } from "lucide-react";
 import type { Metadata } from "next";
 import { getDentistBySlug } from "@/lib/supabase/queries";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ClaimDialog } from "@/components/claim-dialog";
 import { DentistMap } from "@/components/map-wrapper";
+import { ViewTracker } from "./view-tracker";
+import { ContactButtons } from "./contact-buttons";
 
 export async function generateMetadata({
   params,
@@ -46,12 +45,9 @@ export default async function DentistePage({
   const dentist = await getDentistBySlug(slug);
   if (!dentist) notFound();
 
-  const whatsappUrl = dentist.phone
-    ? `https://wa.me/${dentist.phone.replace(/\D/g, "")}`
-    : null;
-
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+      <ViewTracker dentistId={dentist.id} />
       {/* Top bar */}
       <div className="border-b border-border bg-white dark:bg-zinc-900">
         <div className="mx-auto flex max-w-5xl items-center gap-4 px-4 py-3">
@@ -181,26 +177,10 @@ export default async function DentistePage({
               </p>
               <div className="flex flex-col gap-3">
                 {dentist.phone && (
-                  <>
-                    <a
-                      href={`tel:${dentist.phone}`}
-                      className="flex items-center gap-2.5 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
-                    >
-                      <Phone className="h-4 w-4" />
-                      {dentist.phone}
-                    </a>
-                    {whatsappUrl && (
-                      <a
-                        href={whatsappUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2.5 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400"
-                      >
-                        <MessageCircle className="h-4 w-4" />
-                        WhatsApp
-                      </a>
-                    )}
-                  </>
+                  <ContactButtons
+                    dentistId={dentist.id}
+                    phone={dentist.phone}
+                  />
                 )}
                 {dentist.email && (
                   <a

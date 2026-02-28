@@ -16,6 +16,8 @@ export interface Dentist {
   photo_url: string | null;
   verified: boolean;
   premium_until: string | null;
+  views_count: number;
+  leads_count: number;
   created_at: string;
 }
 
